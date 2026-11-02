@@ -1,0 +1,50 @@
+======================================================================
+       FER2013 CNN 過擬合與超參數診斷實驗：自動化深度分析報告
+======================================================================
+分析時間點資料筆數：17 組實驗
+
+【 1. 核心表現總覽 】
+• 最佳驗證 Macro F1 模型：dropout_0.0 (Macro F1 = 0.5507, Val Acc = 0.5811)
+• 最佳驗證 Accuracy 模型：epochs_40 (Val Acc = 0.5948)
+• 泛化能力最強 (Train/Val 差距最小)：aug_strong (Gap = 0.0292)
+
+======================================================================
+【 2. 七大實驗問題診斷與數據佐證 】
+======================================================================
+
+(1) CNN 架構實驗 (small vs baseline vs deeper)
+   - arch_deeper     | Train Acc: 0.6411 | Val Acc: 0.5717 | Gap: +0.0694 | Val F1: 0.5148
+   - arch_baseline   | Train Acc: 0.6448 | Val Acc: 0.5710 | Gap: +0.0738 | Val F1: 0.4910
+   - arch_small      | Train Acc: 0.5556 | Val Acc: 0.5107 | Gap: +0.0448 | Val F1: 0.4118
+   👉 診斷結論：表現最佳的架構為「arch_deeper」。模型容量過小會導致欠擬合，過深則容易拉大 Gap 或增加過擬合風險。
+
+(2) Dropout 正則化實驗 (0.0, 0.3, 0.5, 0.6)
+   - dropout_0.0     | Train Acc: 0.7258 | Val Acc: 0.5811 | Gap: +0.1448 | Val F1: 0.5507
+   - dropout_0.3     | Train Acc: 0.6686 | Val Acc: 0.5729 | Gap: +0.0957 | Val F1: 0.5217
+   - dropout_0.5     | Train Acc: 0.6448 | Val Acc: 0.5710 | Gap: +0.0738 | Val F1: 0.4910
+   - dropout_0.6     | Train Acc: 0.6231 | Val Acc: 0.5631 | Gap: +0.0600 | Val F1: 0.4657
+   👉 診斷結論：表現最佳的設定為「dropout_0.0」。若 Dropout 過小（如 0.0），Gap 通常會顯著擴大（過擬合）；若過大則可能限制模型學習能力。
+
+(3) 影像增強強度實驗 (none, mild, medium, strong)
+   - aug_none        | Train Acc: 0.8760 | Val Acc: 0.5569 | Gap: +0.3191 | Val F1: 0.5226
+   - aug_mild        | Train Acc: 0.6448 | Val Acc: 0.5710 | Gap: +0.0738 | Val F1: 0.4910
+   - aug_medium      | Train Acc: 0.6006 | Val Acc: 0.5671 | Gap: +0.0335 | Val F1: 0.4671
+   - aug_strong      | Train Acc: 0.5927 | Val Acc: 0.5635 | Gap: +0.0292 | Val F1: 0.4560
+   👉 診斷結論：表現最佳的增強強度為「aug_none」。過強的增強若破壞了 48x48 微細五官特徵，會導致辨識能力下降；適度增強則能抑制過擬合。
+
+(4) 訓練回合數實驗 (Epochs: 10, 20, 40)
+   - epochs_40       | Train Acc: 0.7218 | Val Acc: 0.5948 | Gap: +0.1270 | Val F1: 0.5469
+   - epochs_20       | Train Acc: 0.6448 | Val Acc: 0.5710 | Gap: +0.0738 | Val F1: 0.4910
+   - epochs_10       | Train Acc: 0.5813 | Val Acc: 0.5442 | Gap: +0.0371 | Val F1: 0.4430
+   👉 診斷結論：觀察不同 epochs 下的 Gap 變化，可判斷 20 或 40 epochs 是否發生過擬合（訓練損失持續下降但驗證停滯）。
+
+(5) L2 正則化、學習率與 Early Stopping 綜合比較
+   - baseline_earlystop   | Train Acc: 0.6608 | Val Acc: 0.5804 | Gap: +0.0804 | Val F1: 0.5154
+   - arch_baseline        | Train Acc: 0.6448 | Val Acc: 0.5710 | Gap: +0.0738 | Val F1: 0.4910
+   - l2_1e-4              | Train Acc: 0.6103 | Val Acc: 0.5630 | Gap: +0.0473 | Val F1: 0.4639
+   - lr_3e-4              | Train Acc: 0.6034 | Val Acc: 0.5562 | Gap: +0.0472 | Val F1: 0.4582
+   👉 診斷結論：引入 L2 能有效壓制過擬合；調整 Learning Rate（如 3e-4）能讓收斂更平穩；搭配 Early Stopping 則可自動防堵後期過擬合。
+
+======================================================================
+報告結語：所有實驗數據與混淆矩陣皆已完整記錄於 ai2_results/ 資料夾中。
+======================================================================
